@@ -16,6 +16,7 @@ area_04 <- high_prob_04*129600*0.000001 # convert to sq km
 area_23 <- high_prob_23*129600*0.000001 # convert to sq km
 
 # decline in high occ prob area from 2004 to 2023
+(high_prob_04-high_prob_23)/high_prob_04
 (area_04-area_23)/area_04
 
 # How much of the high-prob area was lost due to forest loss?
@@ -29,6 +30,12 @@ high_prob_loss <- (length(which(lost$OccReal >= 0.60)) - length(which(gained$Occ
 high_prob_loss/high_prob_04
 # 17.7% of high occ prob areas lost due to removal from study
 hist(lost$OccReal)
+
+# what percent of high-occ-prob cells were simply cut from forest loss?
+#  #highprob_cells_lost_net/#2004_highprobcells
+high_prob_loss/high_prob_04
+
+
 
 
 ###############################################################################
