@@ -5,37 +5,35 @@
 # February 2024
 ################################################################################
 
-# load predicted occupancy
+# Load predicted occupancy data
 pred04 <- read.csv("output/PredictedOccupancy2004.csv")
 pred <- read.csv("output/PredictedOccupancy2023.csv")
 
-# Cells/area with high probability of occupancy
-high_prob_04 <- length(which(pred04$OccReal >= 0.60))
-high_prob_23 <- length(which(pred$OccReal >= 0.60))
-area_04 <- high_prob_04*129600*0.000001 # convert to sq km
-area_23 <- high_prob_23*129600*0.000001 # convert to sq km
+# Cells/area with high probability of occupancy in 2004 and 2023
+high_prob_04 <- pred04[which(pred04$OccReal >= 0.60),]
+high_prob_23 <- pred[which(pred$OccReal >= 0.60),]
+area_04 <- nrow(high_prob_04)*129600*0.000001 # convert to sq km
+area_23 <- nrow(high_prob_23)*129600*0.000001 # convert to sq km
 
-# decline in high occ prob area from 2004 to 2023
-(high_prob_04-high_prob_23)/high_prob_04
+# Calculate % loss of high-occupancy-probability areas from 2004 to 2023
+(nrow(high_prob_04)-nrow(high_prob_23))/nrow(high_prob_04)
 (area_04-area_23)/area_04
+# 78.9% loss of high occ prob area
 
-# How much of the high-prob area was lost due to forest loss?
+# Identify the cells lost and gained from 2004 to 2023
 lost <- pred04[which(!pred04$OBJECTID %in% pred$OBJECTID),] # forested cells lost
 gained <- pred[which(!pred$OBJECTID %in% pred04$OBJECTID),] # forested cells gained
 net_loss <- nrow(lost)-nrow(gained) # 15,714 forested cells lost
-area_lost <- net_loss*129600*0.000001
-net_loss/nrow(pred04) # or 8.5% of the 2004 study area lost
-high_prob_loss <- (length(which(lost$OccReal >= 0.60)) - length(which(gained$OccReal >= 0.60)))
-# 5,929 cells lost that were high-occ-prob
-high_prob_loss/high_prob_04
-# 17.7% of high occ prob areas lost due to removal from study
-hist(lost$OccReal)
 
-# what percent of high-occ-prob cells were simply cut from forest loss?
-#  #highprob_cells_lost_net/#2004_highprobcells
-high_prob_loss/high_prob_04
+# Of the cells lost/gained, which were high occ prob?
+high_prob_net_loss <- length(which(lost$OccReal >= 0.60))-length(which(gained$OccReal >= 0.60))
+high_prob_net_loss/nrow(high_prob_04)
+# 17.7% of high occ prob areas lost due to removal
 
-
+# What percent of 2004 study area is high occ prob?
+nrow(high_prob_04)/nrow(pred04)
+# What percent of 2023 study area is high occ prob?
+nrow(high_prob_23)/nrow(pred)
 
 
 ###############################################################################

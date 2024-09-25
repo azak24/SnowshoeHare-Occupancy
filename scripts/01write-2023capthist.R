@@ -78,18 +78,17 @@ nrow(sh[which(sh$V1 == 1 | sh$V2 == 1 | sh$V3 == 1),]) # 30
 nrow(ec[which(ec$V1 == 1 | ec$V2 == 1 | ec$V3 == 1),]) # 41
 
 # Import transect covariates and coordinates
-coords <- read.csv("data/TransectCoords.csv")
+coords <- read.csv("data/AllTransectCoords.csv")
 grid <- read.csv("data/StudyAreaGrid.csv")
 
 # calculate percent of forested(landscape) that is e-s(landscape)
 grid$PercESpF4500 <- grid$PercES4500/grid$PercF4500
 
 # Join coords then covariates from grid
-sh <- inner_join(sh,coords,by=join_by("Transect"=="TransectPoints.TransectID"))
-sh <- sh[,c(1:10,13,14)]
+sh <- inner_join(sh,coords,by=join_by("Transect"=="TransectID"))
+sh <- sh[,c(1:10,14,15)]
 colnames(sh)[11:12] <- c("Longitude","Latitude")
 ch_sh <- inner_join(sh,grid,by=join_by("Latitude","Longitude"))
-saveRDS(ch_sh,"output/ch_sh.RData")
 
 # Only keep needed columns
 ch_sh <- ch_sh[,c(1:12,17:20,23:28)]
@@ -100,7 +99,6 @@ for (i in 13:22) {
   eval(parse(text=paste0("ch_sh$",var,"Stnd <- (ch_sh$",var," - mean(ch_sh$",
                          var,"))/sd(ch_sh$",var,")")))
 }
-saveRDS(ch_sh,"output/ch_sh_stnd.RData")
 
 # save standardized values for back-transforming
 stnd <- matrix(data = NA, ncol = 10, nrow = 2)
