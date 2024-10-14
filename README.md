@@ -1,2 +1,2 @@
 # SnowshoeHare-Occupancy
-Chapter 1 of my master's thesis on PA snowshoe hare occupancy
+Estimating occupancy probabilities of snowshoe hares in Pennsylvania using survey data from 2004 and 2023.
