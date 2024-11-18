@@ -1,2 +1,2 @@
 # SnowshoeHare-Occupancy
-Estimating occupancy probabilities of snowshoe hares in Pennsylvania using survey data from 2004 and 2023.
+Occupancy modeling of snowshoe hares in Pennsylvania and assessing distributional changes using survey data from 2004 and 2023.
