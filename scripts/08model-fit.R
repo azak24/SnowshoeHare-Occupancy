@@ -14,7 +14,7 @@ library(truncnorm)
 # Because the "1.." will be biased low due to them being re-surveyed and moved to other cohorts
 
 # Load 2023 capture history
-ch_sh <- readRDS("ch_sh.RData")
+ch_sh <- readRDS("output/ch_sh.RData")
 # need to reassign transect 287 from .0. to 0..
 ch_sh[which(ch_sh$Transect == 287),c(2,3)] <- c("0",".")
 # create single capt hist column
@@ -51,7 +51,7 @@ for (x in 1:rows) {
 
 
 # Get covariate values for each transect
-stnd <- read.csv("Newstandardization.csv",row.names = NULL)
+stnd <- read.csv("data/standardization2023.csv",row.names = NULL)
 # standardize
 for (i in c(17,25,28)) {
   var <- colnames(ch_sh)[i]
@@ -144,7 +144,7 @@ test_stat <- sum(test)
 
 # Save separate from results of bootstrap
 chi_sq_obs <- test_stat
-saveRDS(test_stat,"chi_sq_obs.RData")
+saveRDS(test_stat,"output/chi_sq_obs.RData")
 
 
 ### Bootstrapping
@@ -317,9 +317,7 @@ try(
   }
 )
 
-saveRDS(chi_sq_boot, "chi_sq_boot_adjusted.RData")
-#chi_sq_boot <- readRDS("chi_sq_boot_adjusted.RData")
-#chi_sq_obs <- readRDS("chi_sq_obs.RData")
+saveRDS(chi_sq_boot, "output/chi_sq_boot.RData")
 
 # get mean and sd of chi_sq_boot
 chi_mn <- mean(chi_sq_boot)
@@ -331,13 +329,12 @@ abline(v = chi_sq_obs, col = "red")
 
 # p-value will be proportion of chi-sq-stats above the chi-sq-obs
 length(which(chi_sq_boot > chi_sq_obs))/length(chi_sq_boot)
-# 0.68 for 100 iter
-# 0.695 for 1000 iter
+# 0.704 for 1000 iter
 
 ################################################################################
 # 2004 - modified code ----------------------------------------------------
 
-capthist04 <- as_tibble(read.delim("2004capthist.inp"))[9:246,] %>% 
+capthist04 <- as_tibble(read.delim("data/2004capthist.inp"))[9:246,] %>% 
   separate_wider_delim(1, delim = " ", too_many = "debug",
                        names = c("id","id2","ch","group","es","esb","esfb","fb","sf")) %>% 
   separate_wider_delim(1, delim = "*", names = c("id1","id")) %>% 
@@ -450,7 +447,7 @@ test_stat <- sum(test)
 
 # Save separate from results of bootstrap
 chi_sq_obs04 <- test_stat
-saveRDS(test_stat,"chi_sq_obs04.RData")
+saveRDS(test_stat,"output/chi_sq_obs04.RData")
 
 ### Bootstrapping
 
@@ -622,9 +619,7 @@ for (iter in 1:nrep) {
   chi_sq_boot04[iter] <- test_stat_boot
 }
 
-saveRDS(chi_sq_boot04, "chi_sq_boot04.RData")
-#chi_sq_boot04 <- readRDS("chi_sq_boot04.RData")
-#chi_sq_obs04 <- readRDS("chi_sq_obs04.RData")
+saveRDS(chi_sq_boot04, "output/chi_sq_boot04.RData")
 
 # get mean and sd of chi_sq_boot
 chi_mn <- mean(chi_sq_boot04)
@@ -636,8 +631,7 @@ abline(v = chi_sq_obs04, col = "red")
 
 # p-value will be proportion of chi-sq-stats above the chi-sq-obs
 length(which(chi_sq_boot04 > chi_sq_obs04))/length(chi_sq_boot04)
-# 0.92 100
-# 0.94 1000
+# 0.943 1000
 
 ###############################################################################
 # 2004 model fit to 2023 data ---------------------------------------------
@@ -645,7 +639,7 @@ length(which(chi_sq_boot04 > chi_sq_obs04))/length(chi_sq_boot04)
 # Calculate OHC with 2023 capt hist
 
 # Load 2023 capture history
-ch_sh <- readRDS("ch_sh.RData")
+ch_sh <- readRDS("output/ch_sh.RData")
 # need to reassign transect 287 from .0. to 0..
 ch_sh[which(ch_sh$Transect == 287),c(2,3)] <- c("0",".")
 # create single capt hist column
@@ -675,15 +669,13 @@ for (x in 1:rows) {
   ohc[x,3] <- num_obs
 }
 
-
 # Get covariate values for each transect
 # This time need to standardize 2023 values onto **2004 SCALE**
-stnd04 <- read.csv("C:/Users/alz5215/OneDrive - The Pennsylvania State University/Documents/Research/2004data/Newstandardization2004.csv",row.names = NULL)
+stnd04 <- read.csv("data/standardization2004.csv",row.names = NULL)
 # standardize
 ch_sh$sf2Stnd <- (ch_sh$sf2 - stnd04$sf1[1])/(stnd04$sf1[2])
 ch_sh$PercF4500Stnd <- (ch_sh$PercF4500 - stnd04$PercF4500[1])/(stnd04$PercF4500[2])
 ch_sh$PercESpF4500Stnd <- (ch_sh$PercESpF4500 - stnd04$PercESpF4500[1])/(stnd04$PercESpF4500[2])
-
 
 
 # Calculate EHC from 2004 model
@@ -776,7 +768,7 @@ test <- ((ohc_vec-ehc_vec)^2)/ehc_vec
 test_stat <- sum(test)
 
 chi_sq_obs04_23 <- test_stat
-saveRDS(chi_sq_obs04_23, "chi_sq_obs04_23.RData")
+saveRDS(chi_sq_obs04_23, "output/chi_sq_obs04_23.RData")
 
 # Simulate populations under 2004 model
 
@@ -960,9 +952,8 @@ for (iter in 1:nrep) {
   chi_sq_boot04_23[iter] <- test_stat_boot
 }
 
-saveRDS(chi_sq_boot04_23, "chi_sq_boot04_23.RData")
-#chi_sq_boot04_23 <- readRDS("chi_sq_boot04_23.RData")
-#chi_sq_obs04_23 <- readRDS("chi_sq_obs04_23.RData")
+saveRDS(chi_sq_boot04_23, "output/chi_sq_boot04_23.RData")
+
 
 # get mean and sd of chi_sq_boot
 chi_mn <- mean(chi_sq_boot04_23)
@@ -973,7 +964,7 @@ hist(chi_sq_boot04_23,freq=F,breaks=50)
 abline(v = chi_sq_obs04_23, col = "red")
 
 length(which(chi_sq_boot04_23 > chi_sq_obs04_23))/length(chi_sq_boot04_23)
-# p-value of 0.00
+# p-value of 0.00 for 1000
 
 
 
@@ -981,6 +972,7 @@ length(which(chi_sq_boot04_23 > chi_sq_obs04_23))/length(chi_sq_boot04_23)
 ###############################################################################
 # old code - using unmarked package ---------------------------------------
 # Using function built in to unmarked package
+# will not work for my study design
 
 library(unmarked)
 library(AICcmodavg)

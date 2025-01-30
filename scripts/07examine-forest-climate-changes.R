@@ -15,6 +15,12 @@ high_prob_23 <- pred[which(pred$OccReal >= 0.60),]
 area_04 <- nrow(high_prob_04)*129600*0.000001 # convert to sq km
 area_23 <- nrow(high_prob_23)*129600*0.000001 # convert to sq km
 
+# what percentage of area is high occ prob?
+nrow(high_prob_04)/nrow(pred04) # 18%
+nrow(high_prob_23)/nrow(pred) # 4%
+(0.1805732-0.0417023)/0.1805732
+# 76.9% decline
+
 # Calculate % loss of high-occupancy-probability areas from 2004 to 2023
 (nrow(high_prob_04)-nrow(high_prob_23))/nrow(high_prob_04)
 (area_04-area_23)/area_04

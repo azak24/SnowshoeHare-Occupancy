@@ -3,28 +3,29 @@
 # Amanda Zak
 # September 2023
 ################################################################################
-library("stringr")
-library("dplyr")
+library(stringr)
+library(dplyr)
 
-setwd("C:/Users/alz5215/OneDrive - The Pennsylvania State University/Documents/Research/2004data")
+# Import transect coordinates
+coords <- read.csv("data/Snowshoe hare database with elevation and all 3 species.csv", skipNul = TRUE)
 
-### First need to join coordinate and transect tables
+# Import 2004 capture history text file
+inp <- read.csv("data/2005haredata.inp.csv", skipNul = TRUE)
 
-# import transect coordinates
-coords <- read.csv("Snowshoe hare database with elevation and all 3 species.csv", skipNul = TRUE)
-
-# import old inp
-inp <- read.csv("2005haredata.inp.csv", skipNul = TRUE)
-
-# need to match up site and site ID somehow
+# Need to match up coords$SiteID and inp$Site so that they can be joined
+# First remove duplicate rows
 coords2 <- na.omit(distinct(coords[,c("SiteID","SiteID1","Latitude1","Longitude1")]))
+# Re-format SiteID and Site so that they match
 coords2$SiteID2 <- paste0(coords2$SiteID,ifelse(coords2$SiteID1 == "t","t","r"))
 inp$SiteID2 <- str_sub_all(inp$Site,3)
 inp$SiteID2 <- str_sub_all(inp$SiteID2,end=-4)
 inp$SiteID2 <- as.character(inp$SiteID2)
+# Now join
 coordsJoin <- inner_join(coords2,inp,by="SiteID2",relationship="many-to-one")
-# 2 duplicated rows - 81r (83,84) and 147r
-# get average coordinates for both
+# However, there are 2 transects with multiple different coordinates - 81r and 147r
+  # Likely because the surveyor started at different locations on different visits
+# To solve, we will use the midpoint for each duplicated survey
+  # Then drop the duplicates
 coordsJoin[83,3] <- (coordsJoin[83,3] + coordsJoin[84,3])/2
 coordsJoin[83,4] <- (coordsJoin[83,4] + coordsJoin[84,4])/2
 coordsJoin <- coordsJoin[-84,]
@@ -32,25 +33,21 @@ coordsJoin[138,3] <- (coordsJoin[138,3] + coordsJoin[139,3])/2
 coordsJoin[138,4] <- (coordsJoin[138,4] + coordsJoin[139,4])/2
 coordsJoin <- coordsJoin[-139,]
 
-# save
-coordsOut <- coordsJoin[,c(1,5,3,4)]
-saveRDS(coordsJoin,"C:/Users/alz5215/OneDrive - The Pennsylvania State University/Documents/Research/2004data/coordsJoin.RData")
-write.csv(coordsOut,"C:/Users/alz5215/OneDrive - The Pennsylvania State University/Documents/Research/2004data/coordsOut.csv", row.names = FALSE)
+# Save point
+# coordsOut <- coordsJoin[,c("SiteID","SiteID2","Latitude1","Longitude1")]
+# write.csv(coordsOut,"data/2004coordsOut.csv", row.names = FALSE)
 
-### Import land cover variables and add snowfall
+# Import 2004 transect covariates
+trans <- read.csv("data/Transects2004_Covariates.csv")
 
-# Import 2004 buffer covariates
-trans <- read.csv("Transects2004_Covariates.csv")
-
-# calculate ESfB
+# Calculate percent of forest(landscape) that is early-successional(landscape)
 trans$PercESpF4500 <- trans$PercES4500/trans$PercF4500
 
-# join to capture history and pare down to essential columns
+# Join the site covariates to the capture history and pare down to essential columns
 captHist <- inner_join(coordsJoin,trans,by="SiteID2")
-captHist <- captHist[,c(6:9,33:40)]
+captHist <- captHist[,c(6:9,33:40,29:30)] # keep site, obs, env covariates, and lat/long
 
-
-### Standardize variables and save values
+# Standardize variables and save values for back-transforming
 for (i in 5:12) {
   var <- colnames(captHist)[i]
   eval(parse(text=paste0("captHist$",var,"Stnd <- (captHist$",var," - mean(captHist$",
@@ -65,11 +62,13 @@ for (i in 1:ncol(stnd04)) {
   eval(parse(text=paste0("stnd04[2,",i,"] <- sd(captHist$",colnames(captHist)[i+4],")")))
 }
 
-write.csv(stnd04,"Newstandardization2004.csv",row.names = FALSE)
+write.csv(stnd04,"data/Newstandardization2004.csv",row.names = FALSE)
 
+# Save point
+#saveRDS(captHist,"data/2004_captHist.RData")
 
-### Write inp file
-fn <- "New2004capthist.inp"
+# Write text file for use in Program MARK
+fn <- "output/2004capthist.inp"
 captHist$capthist <- paste0(captHist$Site," ",captHist$Obs1,captHist$Obs2,captHist$Obs3,
                             " ","1"," ",captHist$PercESStnd," ",captHist$PercES4500Stnd," ",
                             captHist$PercESpF4500Stnd," ",captHist$PercF4500Stnd," ",
@@ -87,7 +86,3 @@ write(paste("/* 2004 Snowshoe Hare Capture History Northern PA",
             "*/"),
       file=fn)
 write(captHist$capthist, fn, append=T)
-
-
-
-

@@ -40,29 +40,47 @@ sum(pred23_all$OccReal) # 99,492 occ cells
  
 
 ###############################################################################
-# Calculating area of >60% occ prob per decade
+# Calculating area of >60% occ prob per decade, and proportion of total study area
 
 # 2004
 hop04 <- length(which(pred04$OccReal >= 0.6))*(360*360)*(1e-6)
 # 4335 sq km
+length(which(pred04$OccReal >= 0.6))/nrow(pred04)
+# 18.1%
 
 # 2023
 hop23 <- length(which(pred$OccReal >= 0.6))*(360*360)*(1e-6)
 # 916 sq km
+length(which(pred$OccReal >= 0.6))/nrow(pred)
+# 4.17%
+
+# change in area
 (hop23-hop04)/hop04
 # 78.9% loss
+
+# change in proportion area
+(0.0417023-0.1805732)/0.1805732
+# 76.9% loss
 
 # 2023 prediction climate only
 hop23_sf <- length(which(pred23_sf$OccReal >= 0.6))*(360*360)*(1e-6)
 # 2971 sq km 
+length(which(pred23_sf$OccReal >= 0.6))/nrow(pred)
+# 13.5% 
 (hop23_sf-hop04)/hop04
 # 31.5% loss
+(0.1352228-0.1805732)/0.1805732
+# 25.1% loss
 
 # 2023 prediction all
 hop23_all <- length(which(pred23_all$OccReal >= 0.6))*(360*360)*(1e-6)
 # 10,690 sq km
+length(which(pred23_all$OccReal >= 0.6))/nrow(pred)
+# 48.7%
 (hop23_all-hop04)/hop04
 # 146.6% gain
+(0.4865131-0.1805732)/0.1805732
+# 169.4% increase
 
 
 ##############################################################################

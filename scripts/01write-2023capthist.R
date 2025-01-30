@@ -6,22 +6,24 @@
 library(dplyr)
 library(tidyr)
 
-# upload DNA results
+# Read in DNA results for each sample
 dna <- read.csv("data/DNAforR.csv")
 
-# remove the data flagged "remove"
+# Remove the data flagged "remove" (censored for various reasons)
 dna <- subset(dna, dna$Note != "Remove")
 
-# list of completed surveys
+# Read in list of completed surveys
 visits <- read.csv("data/VisitsForR.csv")
 
-# add detection covariates to visits
+# Add detection covariates to each survey
 snowcover <- read.csv("data/snowcover.csv")
 snowcover$ID <- paste0(snowcover$transectid,"-",snowcover$survey_visit_no)
 snowcover$scYN <- ifelse(snowcover$snow_condition == "0 - 25%",0,1)
 snowcover$scPerc1 <- ifelse(snowcover$snow_condition == "25 - 75%",1,0)
 snowcover$scPerc2 <- ifelse(snowcover$snow_condition == "75 - 100%",1,0)
 visits <- left_join(visits,snowcover,by="ID",keep=FALSE)
+# note: some surveys were incomplete (logging on transect, encountered body of water, etc.)
+  # so 'visits' has fewer records than 'snowcover'
 
 # Create snowshoe hare capt hist
 sh <- matrix(data = NA, nrow = length(unique(visits$Transect)), ncol = 10)
@@ -47,60 +49,30 @@ for (i in 1:nrow(sh)) { # for each transect
   }
 }
 
+# Import site coordinates and covariates
+coords <- read.csv("data/AllTransectCoords.csv") # 325 sample units; not all were surveyed
+grid <- read.csv("data/StudyAreaGrid.csv") # all grid cells in study area
 
-# Create cottontail capt hist (eastern and appalachian combined)
-ec <- matrix(data = NA, nrow = length(unique(visits$Transect)), ncol = 10)
-colnames(ec) <- c("Transect","V1","V2","V3","sc1","sc2","sc3","scPerc1","scPerc2","scPerc3")
-ec[,"Transect"] <- c(unique(visits$Transect))
-ec <- as.data.frame(ec)
-for (i in 1:nrow(ec)) { # for each transect
-  for (j in 1:3) { # for each visit
-    if (j %in% visits[which(visits$Transect == ec$Transect[i]),"Visit"]) { # if the transect was visited
-      # if ec or ac detected, matrix gets a 1
-      # if not detected, matrix gets a 0
-      ec[i,j+1] <- ifelse("Eastern Cottontail" %in% dna[which(dna$Transect == ec$Transect[i] & dna$Visit == j),"Species"],
-                          "1",ifelse("Appalachian Cottontail" %in% dna[which(dna$Transect == ec$Transect[i] & dna$Visit == j),"Species"],
-                                     "1","0"))
-      # fill in snow cover
-      ec[i,j+4] <- visits[which(visits$Transect == ec$Transect[i] & visits$Visit == j),9]
-      ec[i,j+7] <- paste0(visits[which(visits$Transect == ec$Transect[i] & visits$Visit == j),10]," ",
-                          visits[which(visits$Transect == ec$Transect[i] & visits$Visit == j),11])
-    } else {
-      ec[i,j+1] <- "."
-      ec[i,j+4] <- "9"
-      ec[i,j+7] <- "9 9"
-    }
-  }
-}
-
-# check totals
-nrow(sh[which(sh$V1 == 1 | sh$V2 == 1 | sh$V3 == 1),]) # 30
-nrow(ec[which(ec$V1 == 1 | ec$V2 == 1 | ec$V3 == 1),]) # 41
-
-# Import transect covariates and coordinates
-coords <- read.csv("data/AllTransectCoords.csv")
-grid <- read.csv("data/StudyAreaGrid.csv")
-
-# calculate percent of forested(landscape) that is e-s(landscape)
+# Calculate percent of forest(landscape) that is early-successional(landscape)
 grid$PercESpF4500 <- grid$PercES4500/grid$PercF4500
 
-# Join coords then covariates from grid
+# Join coords with transects, then join covariates
 sh <- inner_join(sh,coords,by=join_by("Transect"=="TransectID"))
-sh <- sh[,c(1:10,14,15)]
+sh <- sh[,c("Transect","V1","V2","V3","sc1","sc2","sc3","scPerc1","scPerc2","scPerc3","CoordX","CoordY")]
 colnames(sh)[11:12] <- c("Longitude","Latitude")
 ch_sh <- inner_join(sh,grid,by=join_by("Latitude","Longitude"))
 
-# Only keep needed columns
+# Reduce columns
 ch_sh <- ch_sh[,c(1:12,17:20,23:28)]
 
-# standardize covariates
+# Standardize covariates
 for (i in 13:22) {
   var <- colnames(ch_sh)[i]
   eval(parse(text=paste0("ch_sh$",var,"Stnd <- (ch_sh$",var," - mean(ch_sh$",
                          var,"))/sd(ch_sh$",var,")")))
 }
 
-# save standardized values for back-transforming
+# Save mean & sd for back-transforming later
 stnd <- matrix(data = NA, ncol = 10, nrow = 2)
 colnames(stnd) <- colnames(ch_sh)[13:22]
 for (i in 1:ncol(stnd)) {
@@ -111,10 +83,7 @@ for (i in 1:ncol(stnd)) {
 
 write.csv(stnd,"data/standardization2023.csv",row.names=FALSE)
 
-
-
-# Write final sh, ec, and multi files into text files for MARK
-
+# Write final text file for use in Program MARK
 fn <- "output/ch_sh.inp"
 ch_sh$tag <- paste("/*", ch_sh$Transect, "*/")
 ch_sh$capthist <- paste0(ch_sh$tag," ",ch_sh$V1,ch_sh$V2,ch_sh$V3," ","1"," ",
